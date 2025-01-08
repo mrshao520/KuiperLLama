@@ -1,24 +1,35 @@
+# -----| cmake version
 cmake_minimum_required(VERSION 3.16)
 
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+# -----| KuiperLLama project
+project(KuiperLLama CXX CUDA)
+
+# -----| cpp and cuda version
+set(CMAKE_CXX_STANDARD 17)               # 设置C++标准为17
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)      # 要求C++标准必须为17
+set(CMAKE_CUDA_STANDARD 14)              # 设置CUDA标准为14
+set(CMAKE_CUDA_STANDARD_REQUIRED ON)     # 要求CUDA标准必须为14
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)    # 开启导出编译命令功能
+
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -pthread")
+
 
 # Set the CUDA compiler path or name
 set(CMAKE_CUDA_COMPILER "/usr/local/cuda/bin/nvcc")
 
 project(llama_infer CXX CUDA)
+
 include(cmake/cuda.cmake)
 
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CUDA_STANDARD_REQUIRED ON)
-set(CMAKE_CUDA_STANDARD 14)
 
-option(LLAMA3_SUPPORT OFF)
+option(LLAMA3_SUPPORT ON)
 if (LLAMA3_SUPPORT)
   message(STATUS "LLAMA3 SUPPORT")
   add_definitions(-DLLAMA3_SUPPORT)
 endif()
-option(QWEN2_SUPPORT OFF)
+option(QWEN2_SUPPORT ON)
 if (QWEN2_SUPPORT)
   message(STATUS "QWEN2 SUPPORT")
   add_definitions(-DQWEN2_SUPPORT)
