@@ -85,8 +85,14 @@ namespace base
 
     ~NoCopyable() = default;
 
+    /**
+     * @brief 不允许通过复制现有对象的方式来创建新对象
+     */
     NoCopyable(const NoCopyable &) = delete;
 
+    /**
+     * @brief 不允许通过赋值一个对象给另一个对象的方式来复制对象
+     */
     NoCopyable &operator=(const NoCopyable &) = delete;
   };
 

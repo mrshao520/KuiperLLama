@@ -107,13 +107,18 @@ void Tensor::to_cuda(cudaStream_t stream) {
   if (device_type == base::DeviceType::kDeviceUnknown) {
     LOG(ERROR) << "The device type of the tensor is unknown.";
   } else if (device_type == base::DeviceType::kDeviceCPU) {
+    /// CPU to CUDA
+    /// 获取 Tensor 的字节大小
     size_t byte_size = this->byte_size();
+    /// 获取 CUDA 设备分配器的实例
     auto cu_alloc = base::CUDADeviceAllocatorFactory::get_instance();
+    /// 创建一个新的CUDA缓冲区
     auto cu_buffer = std::make_shared<base::Buffer>(byte_size, cu_alloc);
     cu_alloc->memcpy(buffer_->ptr(), cu_buffer->ptr(), byte_size, base::MemcpyKind::kMemcpyCPU2CUDA,
                      stream);
     this->buffer_ = cu_buffer;
   } else {
+    /// CUDA to CUDA
     LOG(INFO) << "The device type of the tensor is already cuda.";
   }
 }
@@ -152,6 +157,7 @@ base::DeviceType Tensor::device_type() const {
 }
 
 bool Tensor::assign(std::shared_ptr<base::Buffer> buffer) {
+  /// 检查传入的缓冲区是否为空
   if (!buffer) {
     LOG(ERROR) << "The buffer parameter in the assign function is null pointer!";
     return false;
@@ -162,6 +168,7 @@ bool Tensor::assign(std::shared_ptr<base::Buffer> buffer) {
     }
   }
 
+  /// 检查新缓冲区的大小是否足够
   size_t byte_size = this->byte_size();
   if (byte_size > buffer->byte_size()) {
     LOG(ERROR) << "The size of buffer is too small for the tensor!";
@@ -178,12 +185,13 @@ bool Tensor::allocate(std::shared_ptr<base::DeviceAllocator> allocator, bool nee
     return false;
   }
 
+  /// 获取张量字节数
   size_t byte_size = this->byte_size();
   if (!byte_size) {
     LOG(ERROR) << "The byte_size parameter in the allocate function is equal to zero!";
     return false;
   }
-
+  /// 如果已经有一个缓冲区且其大小足够，且不需要重新分配，则直接返回 true。
   if (buffer_ && byte_size <= buffer_->byte_size()) {
     if (!need_realloc) {
       return true;
@@ -219,16 +227,19 @@ base::DataType Tensor::data_type() const { return data_type_; }
 
 void Tensor::reshape(const std::vector<int32_t>& dims) {
   size_t size = reduce_dimension(dims.begin(), dims.end(), 1);
+  // 如果当前没有缓冲区，则直接设置新维度和大小
   if (!buffer_) {
     this->dims_ = dims;
     this->size_ = size;
     return;
   }
 
+  // 如果新大小大于当前大小，则需要重新分配内存
   if (size > size_) {
     auto new_buffer = std::make_shared<base::Buffer>(size * base::DataTypeSize(this->data_type_),
                                                      buffer_->allocator());
     CHECK(new_buffer->allocate());
+    /// 将旧缓冲区的数据复制到新缓冲区
     new_buffer->copy_from(buffer_.get());
     this->buffer_ = new_buffer;
   }
@@ -269,10 +280,12 @@ bool Tensor::is_empty() const {
 void Tensor::init_buffer(std::shared_ptr<base::DeviceAllocator> alloc, base::DataType data_type,
                          bool need_alloc, void* ptr) {
   if (!alloc && !need_alloc) {
+    /// 检查是否不需要分配器且不需要分配内存
     std::shared_ptr<base::Buffer> buffer =
         std::make_shared<base::Buffer>(data_type_size(data_type) * size_, nullptr, ptr, true);
     this->buffer_ = buffer;
   } else {
+    // 如果需要分配器或需要分配内存，则调用 allocate 函数进行内存分配
     allocate(alloc, true);
   }
 }

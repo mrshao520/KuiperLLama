@@ -36,6 +36,9 @@ class Tensor {
 
   bool is_empty() const;
 
+  /**
+   *
+   */
   void init_buffer(std::shared_ptr<base::DeviceAllocator> alloc, base::DataType data_type,
                    bool need_alloc, void* ptr);
 
@@ -45,6 +48,8 @@ class Tensor {
   template <typename T>
   const T* ptr() const;
 
+  /// @brief 改变Tensor的形状
+  /// @param dims
   void reshape(const std::vector<int32_t>& dims);
 
   std::shared_ptr<base::Buffer> get_buffer() const;
@@ -63,6 +68,9 @@ class Tensor {
 
   std::vector<size_t> strides() const;
 
+  /// @brief 将新的buffer对象分配给Tensor对象
+  /// @param buffer
+  /// @return
   bool assign(std::shared_ptr<base::Buffer> buffer);
 
   void reset(base::DataType data_type, const std::vector<int32_t>& dims);
@@ -71,6 +79,9 @@ class Tensor {
 
   base::DeviceType device_type() const;
 
+  /**
+   * @brief 为张量分配内存
+   */
   bool allocate(std::shared_ptr<base::DeviceAllocator> allocator, bool need_realloc = false);
 
   template <typename T>
@@ -88,10 +99,10 @@ class Tensor {
   tensor::Tensor clone() const;
 
  private:
-  size_t size_ = 0;
-  std::vector<int32_t> dims_;
-  std::shared_ptr<base::Buffer> buffer_;
-  base::DataType data_type_ = base::DataType::kDataTypeUnknown;
+  size_t size_ = 0;                                              ///< 元素总数
+  std::vector<int32_t> dims_;                                    ///< 张量维度
+  std::shared_ptr<base::Buffer> buffer_;                         ///< 存储数据
+  base::DataType data_type_ = base::DataType::kDataTypeUnknown;  ///< 数据类型
 };
 
 template <typename T>

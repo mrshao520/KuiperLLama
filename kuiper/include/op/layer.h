@@ -20,6 +20,7 @@ enum class LayerType : uint8_t {
   kLayerSoftmax = 8,
   kLayerAdd = 9,
   kLayerSwiGLU = 10,
+  kLayerGELU = 11,
 };
 
 class BaseLayer {
@@ -84,10 +85,10 @@ class BaseLayer {
   void set_device_type(base::DeviceType device_type);
 
  protected:
-  std::string layer_name_;
-  LayerType layer_type_ = LayerType::kLayerUnknown;
-  base::DataType data_type_ = base::DataType::kDataTypeUnknown;
-  base::DeviceType device_type_ = base::DeviceType::kDeviceUnknown;
+  std::string layer_name_;                                           ///< 存储层的名称
+  LayerType layer_type_ = LayerType::kLayerUnknown;                  ///< 层的类型
+  base::DataType data_type_ = base::DataType::kDataTypeUnknown;      ///< 数据类型，FP32
+  base::DeviceType device_type_ = base::DeviceType::kDeviceUnknown;  ///< 设备类型
 };
 
 class Layer : public BaseLayer {
@@ -149,9 +150,9 @@ class Layer : public BaseLayer {
   std::shared_ptr<kernel::CudaConfig> cuda_config() const;
 
  protected:
-  std::vector<tensor::Tensor> inputs_;
-  std::vector<tensor::Tensor> outputs_;
-  std::shared_ptr<kernel::CudaConfig> cuda_config_;
+  std::vector<tensor::Tensor> inputs_;               ///< 输入张量
+  std::vector<tensor::Tensor> outputs_;              ///< 输出张量
+  std::shared_ptr<kernel::CudaConfig> cuda_config_;  ///< CUDA配置信息
 };
 
 class LayerParam : public Layer {
@@ -182,9 +183,9 @@ class LayerParam : public Layer {
 
  protected:
   int32_t group_size_ = 0;
-  bool is_quant_layer_ = false;
-  tensor::Tensor scales_;
-  std::vector<tensor::Tensor> weights_;
+  bool is_quant_layer_ = false;  ///< 是否是量化层
+  tensor::Tensor scales_;        ///< 用于存储量化层中的缩放因子，用于将量化后的数据转换为原始浮点数
+  std::vector<tensor::Tensor> weights_;  ///< 权重张量
 };
 }  // namespace op
 #endif  // KUIPER_INCLUDE_OP_LAYER_H_

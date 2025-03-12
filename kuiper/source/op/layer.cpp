@@ -29,6 +29,7 @@ base::Status BaseLayer::set_weight(int32_t idx, const std::vector<int32_t>& dims
 const std::string& BaseLayer::get_layer_name() const { return layer_name_; }
 
 void BaseLayer::set_layer_name(const std::string& layer_name) { layer_name_ = layer_name; }
+
 base::DeviceType BaseLayer::device_type() const { return device_type_; }
 
 void BaseLayer::set_device_type(base::DeviceType device_type) { device_type_ = device_type; }
@@ -57,6 +58,7 @@ base::Status Layer::check_tensor(const tensor::Tensor& tensor, base::DeviceType 
 base::Status Layer::check_tensor_with_dim(const tensor::Tensor& tensor,
                                           base::DeviceType device_type, base::DataType data_type,
                                           ...) const {
+  /// 定义一个变长参数列表
   std::va_list args;
   if (tensor.is_empty()) {
     return base::error::InvalidArgument("The tensor parameter is empty.");
@@ -67,15 +69,20 @@ base::Status Layer::check_tensor_with_dim(const tensor::Tensor& tensor,
   if (tensor.data_type() != data_type) {
     return base::error::InvalidArgument("The tensor has a wrong data type.");
   }
-
+  /// 初始化变长参数列表
   va_start(args, data_type);
+  /// 获取 tensor 的维度大小
   int32_t dims = tensor.dims_size();
+
   for (int32_t i = 0; i < dims; ++i) {
+    /// 从变长参数列表中获取预期的维度值
     int32_t dim = va_arg(args, int32_t);
+    /// 检查 tensor 的每个维度是否匹配
     if (dim != tensor.get_dim(i)) {
       return base::error::InvalidArgument("The tensor has a wrong dim in dim" + std::to_string(i));
     }
   }
+  /// 清空变长列表
   va_end(args);
   return base::error::Success();
 }
@@ -183,20 +190,24 @@ void LayerParam::to_cuda() {
 
 base::Status LayerParam::set_weight(int32_t idx, const std::vector<int32_t>& dims,
                                     const void* weight_ptr, base::DeviceType device_type) {
+  /// 检查索引 idx 是否在合法范围
   CHECK_GE(idx, 0);
   CHECK_LT(idx, weights_.size());
   CHECK_NE(weight_ptr, nullptr);
-
+  /// 计算权重数据的大小，
   size_t size = std::accumulate(dims.begin(), dims.end(), sizeof(float), std::multiplies<>());
+  /// 创建buffer对象来管理权重数据
   std::shared_ptr<base::Buffer> buffer =
       std::make_shared<base::Buffer>(size, nullptr, const_cast<void*>(weight_ptr), true);
+
   if (device_type != base::DeviceType::kDeviceUnknown) {
     buffer->set_device_type(device_type);
   }
-
+  /// 判断当前层是否是量化层
   if (!is_quant_layer_) {
     tensor::Tensor weight(base::DataType::kDataTypeFp32, dims);
     weight.set_device_type(device_type);
+    /// 将 buffer 中的数据赋值给 Tensor
     CHECK(weight.assign(buffer));
     weights_.at(idx) = weight;
   } else {
@@ -206,12 +217,17 @@ base::Status LayerParam::set_weight(int32_t idx, const std::vector<int32_t>& dim
     CHECK(weight.assign(buffer));
     weights_.at(idx) = weight;
 
+    /// 计算权重的大小
     const int32_t weight_size = static_cast<int32_t>(weight.size());
+    /// 检查权重的大小是否是 group_size_ 的整数倍
     CHECK(weight_size % group_size_ == 0);
 
+    /// 计算 scale 的数量
     int32_t scale_nums = weight_size / group_size_;
+    /// 创建一个浮点型 Tensor 对象来存储 scale 值
     scales_ = tensor::Tensor{base::DataType::kDataTypeFp32, scale_nums, false, nullptr,
                              reinterpret_cast<float*>((int8_t*)weight_ptr + weight_size)};
+    /// 设置 scale 的设备类型
     scales_.set_device_type(device_type);
   }
 

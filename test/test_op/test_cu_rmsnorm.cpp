@@ -28,12 +28,10 @@ TEST(test_rmsnorm_cu, rmsnorm_nostream) {
   wei_cu.to_cuda(nullptr);
   out_cu.to_cuda(nullptr);
 
-  kernel::get_rmsnorm_kernel(base::DeviceType::kDeviceCUDA)(in_cu, wei_cu, out_cu,
-                                                            nullptr);
+  kernel::get_rmsnorm_kernel(base::DeviceType::kDeviceCUDA)(in_cu, wei_cu, out_cu, nullptr);
   out_cu.to_cpu();
 
-  kernel::get_rmsnorm_kernel(base::DeviceType::kDeviceCPU)(in_cpu, wei_cpu, out_cpu,
-                                                           nullptr);
+  kernel::get_rmsnorm_kernel(base::DeviceType::kDeviceCPU)(in_cpu, wei_cpu, out_cpu, nullptr);
 
   for (int i = 0; i < size; ++i) {
     ASSERT_NEAR(out_cu.index<float>(i), out_cpu.index<float>(i), 1e-5f);
@@ -44,14 +42,17 @@ TEST(test_rmsnorm_cu, rmsnorm_stream) {
   auto alloc_cu = base::CUDADeviceAllocatorFactory::get_instance();
   auto alloc_cpu = base::CPUDeviceAllocatorFactory::get_instance();
 
-  int32_t size = 32 ;
+  int32_t size = 32;
 
   tensor::Tensor in_cpu(base::DataType::kDataTypeFp32, size, true, alloc_cpu);
   tensor::Tensor wei_cpu(base::DataType::kDataTypeFp32, size, true, alloc_cpu);
   tensor::Tensor out_cpu(base::DataType::kDataTypeFp32, size, true, alloc_cpu);
 
+  /// 创建一个 random_deviece 对象，用于获取非确定随机数种子
   std::random_device rd;
+  /// 建一个mt19937对象，这是一种基于梅森旋转算法的伪随机数生成器
   std::mt19937 mt(rd());
+  /// 用于生成指定范围内的随机浮点数
   std::uniform_real_distribution<float> dist(0.f, 1.f);
   for (int i = 0; i < size; ++i) {
     in_cpu.index<float>(i) = dist(mt);
@@ -66,12 +67,10 @@ TEST(test_rmsnorm_cu, rmsnorm_stream) {
   out_cu.to_cuda(nullptr);
   cudaStream_t stream;
   cudaStreamCreate(&stream);
-  kernel::get_rmsnorm_kernel(base::DeviceType::kDeviceCUDA)(in_cu, wei_cu, out_cu,
-                                                            stream);
+  kernel::get_rmsnorm_kernel(base::DeviceType::kDeviceCUDA)(in_cu, wei_cu, out_cu, stream);
   out_cu.to_cpu();
 
-  kernel::get_rmsnorm_kernel(base::DeviceType::kDeviceCPU)(in_cpu, wei_cpu, out_cpu,
-                                                           nullptr);
+  kernel::get_rmsnorm_kernel(base::DeviceType::kDeviceCPU)(in_cpu, wei_cpu, out_cpu, nullptr);
 
   for (int i = 0; i < size; ++i) {
     ASSERT_NEAR(out_cu.index<float>(i), out_cpu.index<float>(i), 1e-5f);
@@ -105,12 +104,10 @@ TEST(test_rmsnorm_cu, rmsnorm_stream2) {
   out_cu.to_cuda(nullptr);
   cudaStream_t stream;
   cudaStreamCreate(&stream);
-  kernel::get_rmsnorm_kernel(base::DeviceType::kDeviceCUDA)(in_cu, wei_cu, out_cu,
-                                                            stream);
+  kernel::get_rmsnorm_kernel(base::DeviceType::kDeviceCUDA)(in_cu, wei_cu, out_cu, stream);
   out_cu.to_cpu();
 
-  kernel::get_rmsnorm_kernel(base::DeviceType::kDeviceCPU)(in_cpu, wei_cpu, out_cpu,
-                                                           nullptr);
+  kernel::get_rmsnorm_kernel(base::DeviceType::kDeviceCPU)(in_cpu, wei_cpu, out_cpu, nullptr);
 
   for (int i = 0; i < size; ++i) {
     ASSERT_NEAR(out_cu.index<float>(i), out_cpu.index<float>(i), 1e-5f);
